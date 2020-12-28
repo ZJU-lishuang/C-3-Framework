@@ -59,7 +59,8 @@ def weights_normal_init(*models):
 
 def logger(exp_path, exp_name, work_dir, exception, resume=False):
 
-    from tensorboardX import SummaryWriter
+    # from tensorboardX import SummaryWriter
+    from torch.utils.tensorboard import SummaryWriter
     
     if not os.path.exists(exp_path):
         os.mkdir(exp_path)
