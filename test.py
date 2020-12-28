@@ -41,7 +41,7 @@ pil_to_tensor = standard_transforms.ToTensor()
 
 dataRoot = '../ProcessedData/shanghaitech_part_B/test'
 
-model_path = 'xxx.pth'
+model_path = './exp/12-21_03-16_SHHB_Res50_1e-05/all_ep_41_mae_8.2_mse_13.9.pth'
 
 def main():
     
@@ -62,9 +62,11 @@ def test(file_list, model_path):
 
     gts = []
     preds = []
+    maes = AverageMeter()
+    mses = AverageMeter()
 
     for filename in file_list:
-    	print( filename )
+        print( filename )
         imgname = dataRoot + '/img/' + filename
         filename_no_ext = filename.split('.')[0]
 
@@ -96,6 +98,18 @@ def test(file_list, model_path):
         pred_map = pred_map/np.max(pred_map+1e-20)
         
         den = den/np.max(den+1e-20)
+
+        pred_cnt = pred
+        gt_count = gt
+
+        maes.update(abs(gt_count - pred_cnt))
+        mses.update((gt_count - pred_cnt) * (gt_count - pred_cnt))
+
+        mae = maes.avg
+        mse = np.sqrt(mses.avg)
+        print("mae=", mae, "mse=", mse)
+
+
 
         
         den_frame = plt.gca()
@@ -145,7 +159,10 @@ def test(file_list, model_path):
         plt.close()
 
         # sio.savemat(exp_name+'/'+filename_no_ext+'_diff.mat',{'data':diff})
-                     
+
+
+    # mae = maes.avg
+    # mse = np.sqrt(mses.avg)
 
 
 
