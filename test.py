@@ -14,11 +14,13 @@ from config import cfg
 from misc.utils import *
 import scipy.io as sio
 from PIL import Image, ImageOps
+import time
 
 torch.cuda.set_device(0)
 torch.backends.cudnn.benchmark = True
 
-exp_name = '../SHHB_results'
+exp_name = '../UCF-QNRF_results'
+exp_name = '../test_results'
 if not os.path.exists(exp_name):
     os.mkdir(exp_name)
 
@@ -39,9 +41,11 @@ restore = standard_transforms.Compose([
     ])
 pil_to_tensor = standard_transforms.ToTensor()
 
-dataRoot = '../ProcessedData/shanghaitech_part_B/test'
+dataRoot = '../ProcessedData/MULDATASET/UCF-QNRF-1024x1024/test'
+dataRoot = '../ProcessedData/testimg'
 
-model_path = './exp/12-21_03-16_SHHB_Res50_1e-05/all_ep_41_mae_8.2_mse_13.9.pth'
+# model_path = './exp/ori12-21_03-16_SHHB_Res50_1e-05/all_ep_41_mae_8.2_mse_13.9.pth'
+model_path = '/home/lishuang/Disk/gitlab/traincode/crowd_counting/PyTorch_Pretrained/all_ep_93_mae_68.8_mse_402.4.pth'
 
 def main():
     
@@ -53,7 +57,7 @@ def main():
 def test(file_list, model_path):
 
     net = CrowdCounter(cfg.GPU_ID,cfg.NET)
-    net.load_state_dict(torch.load(model_path))
+    net.load_state_dict({k.replace('module.',''):v for k,v in torch.load(model_path).items()})
     net.cuda()
     net.eval()
 
@@ -64,7 +68,7 @@ def test(file_list, model_path):
     preds = []
     maes = AverageMeter()
     mses = AverageMeter()
-
+    img_num=0
     for filename in file_list:
         print( filename )
         imgname = dataRoot + '/img/' + filename
@@ -80,14 +84,15 @@ def test(file_list, model_path):
         if img.mode == 'L':
             img = img.convert('RGB')
 
-
+        t1 = time.time()
         img = img_transform(img)
 
         gt = np.sum(den)
         with torch.no_grad():
             img = Variable(img[None,:,:,:]).cuda()
             pred_map = net.test_forward(img)
-
+        t2 = time.time()
+        print('Done. (%.3fs)' % (t2 - t1))
         sio.savemat(exp_name+'/pred/'+filename_no_ext+'.mat',{'data':pred_map.squeeze().cpu().numpy()/100.})
         sio.savemat(exp_name+'/gt/'+filename_no_ext+'.mat',{'data':den})
 
@@ -107,7 +112,9 @@ def test(file_list, model_path):
 
         mae = maes.avg
         mse = np.sqrt(mses.avg)
-        print("mae=", mae, "mse=", mse)
+        img_num=img_num+1
+        if img_num %100 ==0:
+            print("mae=", mae, "mse=", mse)
 
 
 
@@ -160,7 +167,7 @@ def test(file_list, model_path):
 
         # sio.savemat(exp_name+'/'+filename_no_ext+'_diff.mat',{'data':diff})
 
-
+    print("last_mae=", mae, "last_mse=", mse)
     # mae = maes.avg
     # mse = np.sqrt(mses.avg)
 

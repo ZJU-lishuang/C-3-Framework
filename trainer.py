@@ -69,7 +69,7 @@ class Trainer():
             print( '='*20 )
 
             # validation
-            if epoch%cfg.VAL_FREQ==0 or epoch>cfg.VAL_DENSE_START:
+            if epoch%cfg.VAL_FREQ==0 and epoch>cfg.VAL_DENSE_START:
                 self.timer['val time'].tic()
                 if self.data_mode in ['SHHA', 'SHHB', 'QNRF', 'UCF50','MULDATASET']:
                     self.validate_V1()

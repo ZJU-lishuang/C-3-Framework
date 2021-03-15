@@ -18,7 +18,7 @@ from PIL import Image, ImageOps
 torch.cuda.set_device(0)
 torch.backends.cudnn.benchmark = True
 
-exp_name = '../SHHB_results'
+exp_name = '../test_results'
 if not os.path.exists(exp_name):
     os.mkdir(exp_name)
 
@@ -40,21 +40,25 @@ restore = standard_transforms.Compose([
 pil_to_tensor = standard_transforms.ToTensor()
 
 dataRoot = '../ProcessedData/'
-dataRoot = '../ProcessedData/shanghaitech_part_B/test'
 
 model_path = './exp/12-21_03-16_SHHB_Res50_1e-05/all_ep_41_mae_8.2_mse_13.9.pth'
+model_path = '/home/lishuang/Disk/gitlab/traincode/crowd_counting/PyTorch_Pretrained/all_ep_93_mae_68.8_mse_402.4.pth'
 
 
 def main():
     file_list = [filename for root, dirs, filename in os.walk(dataRoot + '/testimg/')]
-    file_list = [filename for root, dirs, filename in os.walk(dataRoot + '/img/')]
 
     inference(file_list[0], model_path)
 
 
 def inference(file_list, model_path):
+    # net = CrowdCounter(cfg.GPU_ID, cfg.NET)
+    # net.load_state_dict(torch.load(model_path))
+    # net.cuda()
+    # net.eval()
+
     net = CrowdCounter(cfg.GPU_ID, cfg.NET)
-    net.load_state_dict(torch.load(model_path))
+    net.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(model_path).items()})
     net.cuda()
     net.eval()
 
@@ -66,7 +70,7 @@ def inference(file_list, model_path):
     for filename in file_list:
         print(filename)
         imgname = dataRoot + '/testimg/' + filename
-        imgname = dataRoot + '/img/' + filename
+        # imgname = dataRoot + '/img/' + filename
         filename_no_ext = filename.split('.')[0]
 
 
